@@ -1,0 +1,64 @@
+{
+  "identity": {
+    "language": {
+      "value": "Spanish",
+      "updated": "2026-09-21"
+    }
+  },
+  "preferences": {},
+  "projects": {},
+  "relationships": {
+    "friend_name": {
+      "value": "Alessio",
+      "updated": "2026-09-21"
+    },
+    "alessio_relationship": {
+      "value": "friend from school",
+      "updated": "2026-09-21"
+    }
+  },
+  "wishes": {},
+  "notes": {
+    "next_activity": {
+      "value": "go to eat soon",
+      "updated": "2026-09-21"
+    }
+  },
+  "sessions": [],
+  "work_sessions": [
+    {
+      "id": "session_20260914144656_0",
+      "title": "Jardy Plan",
+      "topic": "Lavorare al progetto Jardy Plan",
+      "summary": "Sessione dedicata alla progettazione e all'andamento del progetto Jardy Plan, inclusi i progressi e le prossime tappe.",
+      "scope": "project",
+      "created_at": "2026-09-14 14:46:56",
+      "updated_at": "2026-09-14 14:46:56",
+      "notes": []
+    },
+    {
+      "id": "session_20260917134638_1",
+      "title": "Pianificazione Jardy Plan",
+      "topic": "Riprogettazione e strategia deadline",
+      "summary": "Creazione di un nuovo piano d'azione per il progetto Jardy Plan, data la scadenza imminente e la necessità di un approccio alternativo per la V1.0.",
+      "scope": "project",
+      "created_at": "2026-09-17 13:46:38",
+      "updated_at": "2026-09-17 13:46:38",
+      "notes": []
+    },
+    {
+      "id": "session_20260920154800_2",
+      "title": "Progetto Jarvis",
+      "topic": "Sviluppo Jarvis",
+      "summary": "Sessione dedicata allo sviluppo e alla pianificazione del progetto Jarvis.",
+      "scope": "project",
+      "created_at": "2026-09-20 15:48:00",
+      "updated_at": "2026-09-20 15:48:00",
+      "notes": []
+    }
+  ],
+  "meta": {
+    "last_memory_update": "2026-09-21 17:14:59",
+    "last_memory_day": "2026-09-21"
+  }
+}
