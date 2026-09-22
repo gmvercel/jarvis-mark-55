@@ -1,0 +1,43 @@
+PyQt6
+PyQt6-WebEngine
+PyMuPDF
+sounddevice
+openwakeword
+google-genai>=2.8.0
+google-generativeai
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+pillow
+requests
+beautifulsoup4
+ddgs
+playwright
+pyautogui
+pyperclip
+pygetwindow
+opencv-python
+numpy
+trimesh
+mss
+psutil
+send2trash
+youtube-transcript-api
+spotipy
+python-pptx
+fastapi
+uvicorn[standard]
+cryptography
+python-multipart
+comtypes; sys_platform == "win32"
+pycaw; sys_platform == "win32"
+win10toast; sys_platform == "win32"
+pywinauto; sys_platform == "win32"
+pywin32; sys_platform == "win32"
+winrt-runtime; sys_platform == "win32"
+winrt-Windows.Foundation; sys_platform == "win32"
+winrt-Windows.Foundation.Collections; sys_platform == "win32"
+winrt-Windows.Media.Control; sys_platform == "win32"
+winrt-Windows.Media.SpeechRecognition; sys_platform == "win32"
+qrcode[pil]
+mediapipe
