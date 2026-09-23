@@ -4247,6 +4247,8 @@ class MainWindow(QMainWindow):
     _mic_status_sig = pyqtSignal(str)  # Microphone status signal
     _ptt_status_sig = pyqtSignal(bool, bool, str)  # enabled, held, chord
     _service_status_sig = pyqtSignal(str, str, str)
+    _audio_level_sig = pyqtSignal(float)
+    _phone_connected_sig = pyqtSignal()
 
     def __init__(self, face_path: str):
         super().__init__()
@@ -4400,6 +4402,8 @@ class MainWindow(QMainWindow):
         self._system_scan_sig.connect(self.show_system_scan)
         self._ptt_status_sig.connect(self._on_ptt_status)
         self._service_status_sig.connect(self._service_status.set_status)
+        self._audio_level_sig.connect(self.hud.set_audio_level)
+        self._phone_connected_sig.connect(self.notify_phone_connected)
         self.set_service_status("GEMINI", "ready", "READY")
         self.set_service_status("GOOGLE", "ready", "TOKEN" if (BASE_DIR / "config" / "google_token.json").exists() else "SETUP")
         self.set_service_status("REMOTE", "off", "OFF")
@@ -6890,7 +6894,7 @@ class JarvisUI:
         self._win.get_plugins = cb
 
     def notify_phone_connected(self) -> None:
-        self._win.notify_phone_connected()
+        self._win._phone_connected_sig.emit()
 
     def set_state(self, state: str):
         self._win._state_sig.emit(state)
@@ -6901,10 +6905,7 @@ class JarvisUI:
 
     def set_audio_level(self, level: float):
         """Thread-safe audio level for the animated face and waveform."""
-        try:
-            self._win.hud.set_audio_level(level)
-        except Exception:
-            pass
+        self._win._audio_level_sig.emit(float(level))
 
     def write_log(self, text: str):
         self._win._log_sig.emit(text)
@@ -6933,7 +6934,7 @@ class JarvisUI:
 
     def advance_system_scan_with_voice(self, text: str):
         """Advance system metric cards from JARVIS spoken transcript."""
-        self._win.advance_system_scan_with_voice(text)
+        self._win._system_scan_transcript_sig.emit(text)
 
     def show_music_widget(self):
         """Bring the current music player widget to the foreground."""
@@ -7006,11 +7007,11 @@ class JarvisUI:
 
     def start_camera_stream(self) -> None:
         """Thread-safe: start live camera feed in the full HUD area."""
-        self._win.start_camera_stream()
+        self._win._cam_stream_sig.emit(True)
 
     def stop_camera_stream(self) -> None:
         """Thread-safe: stop the live camera feed."""
-        self._win.stop_camera_stream()
+        self._win._cam_stream_sig.emit(False)
 
     @property
     def assistant_name(self) -> str:

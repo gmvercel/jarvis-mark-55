@@ -1589,10 +1589,11 @@ class JarvisLive:
             self.ui.write_log(msg)
             print(f"[JARVIS] {msg}")
 
-            # Do not leave the session falsely online with a dead microphone.
-            # The TaskGroup will cancel the other session tasks and the outer
-            # loop will reconnect without requiring a manual restart.
-            raise RuntimeError("Microphone stream stopped") from e
+            # Keep the Live session available for text and dashboard commands.
+            # A missing microphone must not tear down the receiver and reconnect
+            # the whole application in a loop.
+            while True:
+                await asyncio.sleep(5)
         finally:
             if self._wake_detector_task:
                 self._wake_detector_task.cancel()
@@ -1661,6 +1662,7 @@ class JarvisLive:
                                 if full_in:
                                     self.ui.write_log(f"You: {full_in}")
                                     self._session_log.append(f"User: {full_in}")
+                                    self._session_log = self._session_log[-200:]
                                     if self._dashboard:
                                         asyncio.create_task(self._dashboard.broadcast({
                                             "type": "log", "speaker": "user",
@@ -1673,6 +1675,7 @@ class JarvisLive:
                                 if full_out:
                                     self.ui.write_log(f"{self._asst_name}: {full_out}")
                                     self._session_log.append(f"{self._asst_name}: {full_out}")
+                                    self._session_log = self._session_log[-200:]
                                     if self._dashboard:
                                         asyncio.create_task(self._dashboard.broadcast({
                                             "type": "log", "speaker": "jarvis",
@@ -1960,7 +1963,7 @@ class JarvisLive:
     async def _run_system_monitor(self) -> None:
         """Background task: voice alerts when metrics exceed thresholds."""
         while True:
-            await asyncio.sleep(10)
+            await asyncio.sleep(30)
             alert = await asyncio.to_thread(self._sys_monitor.check)
             if not alert or not self.session:
                 continue
@@ -1975,11 +1978,24 @@ class JarvisLive:
             except Exception as e:
                 print(f"[Monitor] ⚠️ Could not send alert: {e}")
 
+    async def _run_optional_task(self, name: str, task_factory) -> None:
+        """Keep optional services from taking down the Live session."""
+        while True:
+            try:
+                await task_factory()
+                return
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                print(f"[JARVIS] Optional task '{name}' stopped: {exc}")
+                self.ui.write_log(f"WARN: {name} temporarily unavailable.")
+                await asyncio.sleep(5)
+
     # ── Background monitor ──────────────────────────────────────────────────────
 
     async def _run_background_monitor(self) -> None:
         """Check user-configured topics once per day; speak alerts when new headlines appear."""
-        await asyncio.sleep(300)          # wait 5 min after startup before first check
+        await asyncio.sleep(600)          # wait 10 min after startup before first check
         while True:
             if self.session:
                 # Don't interrupt if user spoke recently or JARVIS is mid-sentence
@@ -2003,7 +2019,7 @@ class JarvisLive:
                             await asyncio.sleep(6)   # gap between consecutive alerts
                     except Exception as e:
                         print(f"[Monitor] ⚠️ Background check error: {e}")
-            await asyncio.sleep(1800)     # check every 30 minutes
+            await asyncio.sleep(3600)     # check every hour
 
     # ── Proactive mode ──────────────────────────────────────────────────────────
 
@@ -2014,7 +2030,7 @@ class JarvisLive:
         engaged in a real task or has been idle long enough to justify a check-in.
         """
         while True:
-            await asyncio.sleep(20)
+            await asyncio.sleep(45)
 
             if not self.session:
                 continue
@@ -2154,8 +2170,8 @@ class JarvisLive:
                     asyncio.TaskGroup() as tg,
                 ):
                     self.session          = session
-                    self.audio_in_queue   = asyncio.Queue(maxsize=800)
-                    self.out_queue        = asyncio.Queue(maxsize=200)
+                    self.audio_in_queue   = asyncio.Queue(maxsize=240)
+                    self.out_queue        = asyncio.Queue(maxsize=96)
                     self._turn_done_event = asyncio.Event()
 
                     # Reset transient state that must not carry over from a previous session
@@ -2183,16 +2199,16 @@ class JarvisLive:
                         ("player", tg.create_task(self._play_audio())),
                     ]
                     tg.create_task(self._watch_audio_tasks(audio_tasks))
-                    tg.create_task(self._run_system_monitor())
-                    tg.create_task(self._run_background_monitor())
-                    tg.create_task(self._run_proactive_mode())
+                    tg.create_task(self._run_optional_task("system monitor", self._run_system_monitor))
+                    tg.create_task(self._run_optional_task("background monitor", self._run_background_monitor))
+                    tg.create_task(self._run_optional_task("proactive mode", self._run_proactive_mode))
                     if self._dashboard:
-                        tg.create_task(self._relay_phone_audio())
+                        tg.create_task(self._run_optional_task("phone relay", self._relay_phone_audio))
 
                     # Morning briefing — fires once per process launch (if enabled)
                     if not self._briefing_sent and get_brief_enabled():
                         self._briefing_sent = True
-                        tg.create_task(self._send_startup_briefing())
+                        tg.create_task(self._run_optional_task("startup briefing", self._send_startup_briefing))
 
             except KeyboardInterrupt:
                 raise

@@ -11,6 +11,7 @@ Install deps:  pip install fastapi "uvicorn[standard]" cryptography
 import asyncio
 import base64
 import hashlib
+import os
 import re
 import secrets
 import socket
@@ -855,15 +856,16 @@ class DashboardServer:
             print("[Dashboard] Run:  pip install fastapi 'uvicorn[standard]' cryptography")
             return
 
-        # Firewall setup runs in a thread — uvicorn starts immediately,
-        # no waiting for UAC dialogs or subprocess timeouts.
-        asyncio.get_event_loop().run_in_executor(None, _ensure_network_access, self._port)
+        # Firewall changes can trigger UAC dialogs and stall desktop sessions.
+        # LAN access can opt in explicitly; local dashboard access needs none.
+        if os.environ.get("JARVIS_CONFIGURE_FIREWALL") == "1":
+            asyncio.get_event_loop().run_in_executor(None, _ensure_network_access, self._port)
 
         use_ssl  = self._ssl_enabled()
         ssl_key  = BASE_DIR / "config" / "certs" / "jarvis.key"
         ssl_cert = BASE_DIR / "config" / "certs" / "jarvis.crt"
 
-        if use_ssl:
+        if use_ssl and os.environ.get("JARVIS_CONFIGURE_FIREWALL") == "1":
             asyncio.create_task(self._serve_alias())
 
         cfg = uvicorn.Config(
